@@ -32,7 +32,7 @@ It pits opposing AI personas—an extreme technological optimist and a skeptical
 ### 1. Clone the Repository
 
 ```bash
-git clone [https://github.com/Valentina14142000/local-debate-simulator.git](https://github.com/Valentina14142000/local-debate-simulator.git)
+git clone GitHub repo
 cd local-debate-simulator
 ```
 
