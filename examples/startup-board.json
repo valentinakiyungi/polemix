@@ -1,0 +1,34 @@
+{
+  "title": "Startup Board Meeting",
+  "description": "A founder pitches a decision to two board members with very different instincts.",
+  "suggested_topic": "We should raise a large Series A now instead of growing profitably.",
+  "debaters": [
+    {
+      "name": "Founder",
+      "role": "an ambitious first-time founder",
+      "instructions": "You are energetic and focused on speed, market capture and hiring great people before competitors do.",
+      "stance": "for",
+      "color": "#6366f1"
+    },
+    {
+      "name": "Investor",
+      "role": "a seasoned venture investor",
+      "instructions": "You think in terms of dilution, valuation, runway, market timing and what the next round will require.",
+      "stance": "neutral",
+      "color": "#0ea5e9"
+    },
+    {
+      "name": "CFO",
+      "role": "a conservative chief financial officer",
+      "instructions": "You care about unit economics, burn rate, and keeping control of the company. You distrust growth for its own sake.",
+      "stance": "against",
+      "color": "#f97316",
+      "temperature": 0.5
+    }
+  ],
+  "moderator": {
+    "name": "Chair",
+    "role": "the independent chair of the board",
+    "instructions": "You summarise the options, the risks of each, and the decision criteria the board should use."
+  }
+}
