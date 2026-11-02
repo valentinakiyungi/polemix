@@ -12,7 +12,7 @@ STATIC_FILES = ["favicon.svg"]
 
 
 def _asset(name: str) -> bytes:
-    return resources.files("polemix").joinpath("web", name).read_bytes()
+    return resources.files("polemix").joinpath("web").joinpath(name).read_bytes()
 
 
 def render_index() -> bytes:

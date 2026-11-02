@@ -24,7 +24,7 @@ _SAFE_FILE = re.compile(r"^[A-Za-z0-9._-]+\.json$")
 
 
 def _static(name: str) -> bytes:
-    return resources.files("polemix").joinpath("web", name).read_bytes()
+    return resources.files("polemix").joinpath("web").joinpath(name).read_bytes()
 
 
 class App:
