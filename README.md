@@ -2,6 +2,8 @@
 
 **Structured multi-persona AI debates on your own machine.**
 
+**▶ Open the web app: [valentinakiyungi.github.io/polemix](https://valentinakiyungi.github.io/polemix/)**
+
 [![tests](https://github.com/valentinakiyungi/polemix/actions/workflows/tests.yml/badge.svg)](https://github.com/valentinakiyungi/polemix/actions/workflows/tests.yml)
 [![Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Runs offline](https://img.shields.io/badge/runs-100%25_offline-green.svg)](#)
@@ -17,11 +19,13 @@ Everything runs locally through [LM Studio](https://lmstudio.ai/),
 OpenAI-compatible API. Nothing leaves your computer, and Polemix itself has
 **zero required dependencies** — just Python.
 
-![Polemix web app](docs/screenshot.png)
+<p><img src="docs/screenshot.png" alt="Polemix on a desktop" width="68%"> <img src="docs/screenshot-phone.png" alt="Polemix on a phone" width="22%"></p>
 
 ## Features
 
-- **Web app and terminal app** — a browser UI with live streaming, or a clean CLI.
+- **Use it in the browser, no install** — the [web app](https://valentinakiyungi.github.io/polemix/) talks straight to the model server on your own computer.
+- **Or install it** for a terminal app and a local web app that saves transcripts to files.
+- **Works on phones** — a mobile layout with a bottom action bar, live progress and a history sheet.
 - **Real debate structure** — every debater speaks every round, with opening, rebuttal and closing phases, and each speaker sees what was said before.
 - **Line-ups** — four built-in casts (Optimist vs. Skeptic, Proposition vs. Opposition, Expert Roundtable, Believer vs. Devil's Advocate), editable in the browser, or your own in a JSON/YAML file. Two to six debaters.
 - **Moderator synthesis** and an optional **judge's verdict** with 1–10 scores.
@@ -31,7 +35,24 @@ OpenAI-compatible API. Nothing leaves your computer, and Polemix itself has
 - **Stop anytime** — the partial transcript is kept.
 - **Demo mode** — try the whole app with no model installed: `--demo`.
 
-## Quick start
+## Use it in your browser
+
+Open **[valentinakiyungi.github.io/polemix](https://valentinakiyungi.github.io/polemix/)**.
+The page runs entirely in your browser and talks directly to the model server on
+your computer. Debates are kept in your browser's storage.
+
+1. **LM Studio:** load a model, open the **Developer** tab, switch on **Enable CORS**, and press **Start Server**.
+   **Ollama:** quit Ollama, run `launchctl setenv OLLAMA_ORIGINS "*"` (Mac) or set the
+   `OLLAMA_ORIGINS` environment variable to `*` (Windows), then reopen Ollama.
+2. Open the web app. The dot at the top turns green when it finds your model.
+   Click it to change the server address (Ollama is `http://localhost:11434/v1`).
+3. Use Chrome, Edge or Firefox. If the browser asks to access devices on your local network, allow it.
+   Safari may block a secure page from talking to `localhost`; if so, use another browser or install Polemix (below).
+
+On a phone there is no model server to reach, so turn on **demo mode** in the connection
+settings to try the app with scripted answers.
+
+## Install it
 
 ### 1. Install
 
@@ -80,6 +101,7 @@ No model yet? `polemix serve --demo` shows how it all works with scripted answer
 | `polemix check` | Test that the server and model respond |
 | `polemix history` | List saved debates |
 | `polemix show file.json` | Print a saved debate as Markdown |
+| `polemix build-site [dir]` | Build the static web app for GitHub Pages or any web host |
 
 Useful options for `run`:
 
@@ -137,10 +159,21 @@ polemix/
 ├── transcript.py  debate records, Markdown/JSON export, saved history
 ├── cli.py         terminal app
 ├── server.py      local web server with live streaming (Server-Sent Events)
-└── web/           the browser UI (single HTML file)
+├── site.py        builds the static web app (`polemix build-site`)
+└── web/           the browser UI — one HTML file that also contains an in-browser debate engine
 ```
 
 The same event stream drives the terminal, the web app and the tests, so they always behave the same.
+
+## Deploying the web app
+
+The workflow in `.github/workflows/pages.yml` publishes the web app to GitHub Pages on
+every push to `main`. It runs `python -m polemix build-site _site`, which writes a
+single self-contained `index.html` plus its icon. The same page works when served by
+`polemix serve`: it detects the local Polemix server and uses it, and otherwise runs
+debates in the browser.
+
+To turn it on for a fork: **Settings → Pages → Source: GitHub Actions**, then push.
 
 ## Development
 

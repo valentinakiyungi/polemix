@@ -231,6 +231,14 @@ def cmd_show(args) -> int:
     return 0
 
 
+def cmd_build_site(args) -> int:
+    from .site import build_site
+    files = build_site(args.dir)
+    print(f"Built the web app into {args.dir}/ ({len(files)} files).")
+    print("Upload that folder to any static host (GitHub Pages, Netlify …) or open index.html directly.")
+    return 0
+
+
 def cmd_serve(args) -> int:
     from .server import serve
     settings = settings_from_args(args)
@@ -266,6 +274,10 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("-o", "--out", help="folder for saved transcripts (default ./debates)")
     _add_server_args(s)
     s.set_defaults(func=cmd_serve)
+
+    b = sub.add_parser("build-site", help="build the static web app (for GitHub Pages or any web host)")
+    b.add_argument("dir", nargs="?", default="site", help="output folder (default: ./site)")
+    b.set_defaults(func=cmd_build_site)
 
     m = sub.add_parser("models", help="list models available on the server")
     _add_server_args(m)

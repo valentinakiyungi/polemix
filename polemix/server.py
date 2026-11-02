@@ -17,6 +17,7 @@ from .config import Settings
 from .engine import DebateEngine
 from .llm import DemoClient, LLMError, OpenAICompatibleClient
 from .personas import PRESETS, get_preset, preset_from_dict
+from .site import render_index
 from .transcript import list_saved, load_saved
 
 _SAFE_FILE = re.compile(r"^[A-Za-z0-9._-]+\.json$")
@@ -85,7 +86,7 @@ def make_handler(app: App):
             path = urlparse(self.path).path
             try:
                 if path in ("/", "/index.html"):
-                    return self._send(200, _static("index.html"), "text/html; charset=utf-8")
+                    return self._send(200, render_index(), "text/html; charset=utf-8")
                 if path == "/favicon.svg":
                     return self._send(200, _static("favicon.svg"), "image/svg+xml")
                 if path == "/api/info":

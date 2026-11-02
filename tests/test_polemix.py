@@ -239,3 +239,22 @@ def test_web_rejects_bad_input(web):
     with pytest.raises(urllib.error.HTTPError) as e:
         _get(web + "/api/history/..%2F..%2Fsecret.json")
     assert e.value.code == 400
+
+
+# ------------------------------------------------------------ static site --
+def test_build_site(tmp_path):
+    from polemix.site import build_site, render_index
+    files = build_site(tmp_path / "site")
+    assert {f.name for f in files} == {"index.html", "favicon.svg", ".nojekyll"}
+    html = (tmp_path / "site" / "index.html").read_text(encoding="utf-8")
+    assert "/*LINEUPS*/" not in html
+    start = html.index('id="builtin-lineups">') + len('id="builtin-lineups">')
+    embedded = json.loads(html[start:html.index("</script>", start)])
+    assert embedded == [p.to_dict() for p in PRESETS.values()]
+    assert render_index().decode() == html
+    assert main(["build-site", str(tmp_path / "other")]) == 0
+
+
+def test_web_serves_embedded_lineups(web):
+    html = _get(web + "/")[1].decode()
+    assert "/*LINEUPS*/" not in html and "optimist-vs-skeptic" in html

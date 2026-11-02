@@ -2,156 +2,255 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#eef1f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141a2e" media="(prefers-color-scheme: dark)">
+<meta name="description" content="Polemix runs structured AI debates on your own computer with LM Studio or Ollama.">
 <title>Polemix</title>
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
 <style>
 :root{
-  --paper:#eef1f6; --panel:#f8f9fc; --ink:#1d2747; --ink-2:#4a5577; --ink-3:#7c86a3;
-  --rule:#d5dbe7; --brass:#a97a22; --brass-soft:#f3e7cc; --danger:#b4232f; --ok:#24785a;
-  --sans:"Instrument Sans",system-ui,sans-serif; --serif:"Literata",Georgia,serif;
-  color-scheme:light;
+  --paper:#eef1f6; --panel:#f8f9fc; --ink:#1d2747; --ink-2:#4a5577; --ink-3:#6f7997;
+  --rule:#d5dbe7; --brass:#946a1c; --brass-soft:#f3e7cc; --danger:#b4232f; --ok:#24785a;
+  --sans:"Instrument Sans",system-ui,-apple-system,sans-serif; --serif:"Literata",Georgia,serif;
+  --dock-h:0px; color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --paper:#141a2e; --panel:#1b2238; --ink:#e7ebf5; --ink-2:#b2bad0; --ink-3:#7f89a6;
+    --paper:#141a2e; --panel:#1b2238; --ink:#e7ebf5; --ink-2:#b2bad0; --ink-3:#8b95b2;
     --rule:#2c3552; --brass:#d8a948; --brass-soft:#3a3220; --danger:#f0707a; --ok:#5cc79c; color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --paper:#141a2e; --panel:#1b2238; --ink:#e7ebf5; --ink-2:#b2bad0; --ink-3:#7f89a6;
+  --paper:#141a2e; --panel:#1b2238; --ink:#e7ebf5; --ink-2:#b2bad0; --ink-3:#8b95b2;
   --rule:#2c3552; --brass:#d8a948; --brass-soft:#3a3220; --danger:#f0707a; --ok:#5cc79c; color-scheme:dark;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
 html,body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.5 var(--sans)}
 button,input,select,textarea{font:inherit;color:inherit}
+button{-webkit-tap-highlight-color:transparent}
 :focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 
-.app{display:grid;grid-template-columns:340px 1fr;min-height:100vh}
-aside{background:var(--panel);border-right:1px solid var(--rule);padding:22px 20px;display:flex;flex-direction:column;gap:22px;
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:350px minmax(0,1fr);min-height:100vh}
+aside{background:var(--panel);border-right:1px solid var(--rule);padding:22px 20px 28px;display:flex;flex-direction:column;gap:20px;
   position:sticky;top:0;height:100vh;overflow-y:auto}
+main{padding:40px clamp(18px,5vw,72px) 120px;max-width:1040px;width:100%}
+.topbar,.dock{display:none}
+
 .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:18px}
 .brand img{width:28px;height:28px}
-.brand small{font-weight:400;color:var(--ink-3);font-size:12px;margin-left:auto}
-.status{font-size:13px;color:var(--ink-2);display:flex;gap:8px;align-items:flex-start;line-height:1.4}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--ink-3);margin-top:5px;flex:none}
-.dot.ok{background:var(--ok)} .dot.bad{background:var(--danger)}
+.brand small{font-weight:400;color:var(--ink-3);font-size:12px}
+.side-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.iconbtn{border:1px solid transparent;background:none;border-radius:8px;width:38px;height:38px;display:grid;place-items:center;cursor:pointer;color:var(--ink-2)}
+.iconbtn:hover{background:var(--paper)}
+.iconbtn svg{width:20px;height:20px}
 
+.conn{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:10px 12px;cursor:pointer;font-size:13px;color:var(--ink-2);line-height:1.4}
+.conn:hover{border-color:var(--ink-3)}
+.conn b{display:block;color:var(--ink);font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--ink-3);margin-top:4px;flex:none}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--danger)} .dot.demo{background:var(--brass)}
+
+/* ---------- form ---------- */
 form{display:flex;flex-direction:column;gap:14px}
-label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:500;color:var(--ink-2)}
-textarea,select,input[type=text],input[type=number]{background:var(--paper);border:1px solid var(--rule);border-radius:8px;padding:9px 10px;width:100%}
-textarea{resize:vertical;min-height:84px;font-family:var(--serif);font-size:15px}
+label,.field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:500;color:var(--ink-2)}
+textarea,select,input[type=text],input[type=url],input[type=password],input[type=number]{background:var(--paper);border:1px solid var(--rule);border-radius:9px;padding:10px 11px;width:100%;min-height:42px}
+textarea{resize:vertical;min-height:92px;font-family:var(--serif);font-size:16px;line-height:1.45}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.check{flex-direction:row;align-items:center;gap:8px;font-weight:400}
-.hint{font-size:12px;color:var(--ink-3);font-weight:400}
-.btn{border:1px solid var(--rule);background:var(--panel);border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:500}
+.check{flex-direction:row;align-items:center;gap:10px;font-weight:400;min-height:32px;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--ink)}
+.hint{font-size:12px;color:var(--ink-3);font-weight:400;line-height:1.4}
+.examples{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--rule);background:var(--panel);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--ink-2);text-align:left}
+.chip:hover{border-color:var(--ink-3);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.lineups{display:flex;flex-wrap:wrap;gap:6px}
+
+.btn{border:1px solid var(--rule);background:var(--panel);border-radius:9px;padding:10px 15px;cursor:pointer;font-weight:500;min-height:42px}
 .btn:hover{border-color:var(--ink-3)}
 .btn.primary{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.btn.primary:hover{opacity:.9}
+.btn.primary:hover{opacity:.92}
 .btn.stop{background:var(--danger);color:#fff;border-color:var(--danger)}
-.btn.small{padding:4px 9px;font-size:12px}
-.linkbtn{background:none;border:0;padding:0;color:var(--brass);cursor:pointer;font-size:13px;text-align:left}
+.btn.small{padding:6px 11px;font-size:13px;min-height:34px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.linkbtn{background:none;border:0;padding:0;color:var(--brass);cursor:pointer;font-size:13px;text-align:left;font-weight:500}
 
-details.custom{border:1px solid var(--rule);border-radius:8px;padding:10px 12px}
-details.custom summary{cursor:pointer;font-size:13px;font-weight:500;color:var(--ink-2)}
-.persona{border-left:3px solid var(--c,#999);padding:6px 0 6px 10px;margin-top:12px;display:flex;flex-direction:column;gap:6px}
-.persona .top{display:grid;grid-template-columns:1fr 92px 26px;gap:6px}
-.persona textarea{min-height:60px;font:13px/1.4 var(--sans)}
-.persona input,.persona select{padding:6px 8px;font-size:13px}
-.x{border:0;background:none;cursor:pointer;color:var(--ink-3);font-size:18px}
+details.more{border-top:1px solid var(--rule);padding-top:12px}
+details.more>summary{cursor:pointer;font-size:13px;font-weight:600;color:var(--ink-2);list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"+";font-size:18px;font-weight:400;color:var(--ink-3)}
+details.more[open]>summary::after{content:"−"}
+details.more>.inner{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.persona{border-left:3px solid var(--c,#999);padding:4px 0 4px 10px;display:flex;flex-direction:column;gap:6px}
+.persona .top{display:grid;grid-template-columns:1fr 104px 34px;gap:6px}
+.persona textarea{min-height:64px;font:14px/1.4 var(--sans)}
+.persona input,.persona select{padding:7px 9px;font-size:14px;min-height:36px}
+.x{border:0;background:none;cursor:pointer;color:var(--ink-3);font-size:20px;line-height:1;border-radius:6px}
+.x:hover{color:var(--danger);background:var(--paper)}
 
+/* ---------- history ---------- */
 .history h2{font-size:13px;font-weight:600;color:var(--ink-2);margin:0 0 8px}
 .history ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
-.history li{display:flex;align-items:center;gap:4px}
-.history li button.open{flex:1;text-align:left;background:none;border:0;padding:7px 8px;border-radius:6px;cursor:pointer;font-size:13px;line-height:1.35}
+.history li{display:flex;align-items:center;gap:2px}
+.history li button.open{flex:1;text-align:left;background:none;border:0;padding:8px 9px;border-radius:7px;cursor:pointer;font-size:14px;line-height:1.35;min-height:44px}
 .history li button.open:hover,.history li button.open[aria-current]{background:var(--paper)}
-.history li span{display:block;color:var(--ink-3);font-size:11px}
-.history .empty{font-size:13px;color:var(--ink-3)}
+.history li span{display:block;color:var(--ink-3);font-size:12px;margin-top:2px}
+.history li .x{width:36px;height:36px}
+.history .empty{font-size:13px;color:var(--ink-3);padding:4px 0}
 
-main{padding:40px clamp(18px,5vw,72px) 120px;max-width:1040px;width:100%}
-.motion{font-family:var(--serif);font-weight:600;font-size:clamp(28px,4vw,46px);line-height:1.12;letter-spacing:-.01em;margin:0 0 14px;max-width:24ch}
+/* ---------- debate ---------- */
+.motion{font-family:var(--serif);font-weight:600;font-size:clamp(27px,4.2vw,46px);line-height:1.12;letter-spacing:-.01em;margin:0 0 14px;max-width:24ch;overflow-wrap:anywhere}
 .motion.placeholder{color:var(--ink-3)}
-.meta{color:var(--ink-3);font-size:13px;display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center}
-.cast{display:flex;gap:14px;flex-wrap:wrap;margin:18px 0 6px}
+.meta{color:var(--ink-3);font-size:13px;display:flex;flex-wrap:wrap;gap:4px 16px}
+.cast{display:flex;gap:6px 16px;flex-wrap:wrap;margin:16px 0 4px}
 .cast span{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500}
 .cast i{width:10px;height:10px;border-radius:3px;background:var(--c)}
 .toolbar{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
 
-.floor{margin-top:34px;display:flex;flex-direction:column;gap:22px}
+.live{position:sticky;top:0;z-index:5;background:var(--paper);margin:22px 0 0;padding:10px 0 12px;border-bottom:1px solid var(--rule)}
+.live .line{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;color:var(--ink-2)}
+.live .line b{color:var(--c,var(--ink));font-weight:600}
+.progress{height:4px;background:var(--rule);border-radius:2px;overflow:hidden;margin-top:8px}
+.progress b{display:block;height:100%;width:0;background:var(--brass);transition:width .4s ease}
+
+.floor{margin-top:30px;display:flex;flex-direction:column;gap:22px}
 .round-mark{display:flex;align-items:center;gap:12px;color:var(--ink-3);font-size:12px;font-weight:500}
 .round-mark::before,.round-mark::after{content:"";height:1px;background:var(--rule);flex:1}
 .speech{max-width:640px;border-left:3px solid var(--c);padding:2px 0 2px 18px}
-.speech.right{align-self:flex-end;border-left:0;border-right:3px solid var(--c);padding:2px 18px 2px 0;text-align:left}
-.speech.mid{align-self:center}
+.speech.right{align-self:flex-end;border-left:0;border-right:3px solid var(--c);padding:2px 18px 2px 0}
 .who{font-weight:600;font-size:14px;color:var(--c);display:flex;gap:8px;align-items:baseline}
 .who em{font-style:normal;font-weight:400;color:var(--ink-3);font-size:12px}
 .body{font-family:var(--serif);font-size:17px;line-height:1.65;margin-top:4px;white-space:pre-wrap;overflow-wrap:anywhere}
+.body.typing:empty::before{content:"Thinking…";color:var(--ink-3);font-style:italic}
 .body.typing::after{content:"▍";color:var(--c);animation:blink 1s steps(2) infinite}
 @keyframes blink{50%{opacity:0}}
 
-.synthesis{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:22px 26px;margin-top:10px}
+.synthesis{background:var(--panel);border:1px solid var(--rule);border-radius:12px;padding:22px 26px;margin-top:8px}
 .synthesis h3{margin:0 0 8px;font-size:14px;color:var(--brass);font-weight:600}
 .synthesis .body{white-space:normal}
 .synthesis .body p{margin:0 0 12px}
+.synthesis .body ul{margin:0 0 12px;padding-left:20px}
 .verdict{border:1px solid var(--brass);background:var(--brass-soft);border-radius:12px;padding:18px 22px}
 .verdict h3{margin:0 0 10px;font-size:14px;font-weight:600}
 .verdict .win{font-family:var(--serif);font-size:24px;font-weight:600;margin-bottom:10px}
-.score{display:grid;grid-template-columns:130px 1fr 40px;gap:10px;align-items:center;font-size:13px;margin:4px 0}
+.verdict p{margin:10px 0 0}
+.score{display:grid;grid-template-columns:minmax(80px,140px) 1fr 44px;gap:10px;align-items:center;font-size:13px;margin:6px 0}
 .score .bar{height:8px;background:var(--rule);border-radius:4px;overflow:hidden}
 .score .bar b{display:block;height:100%;background:var(--c)}
-.notice{border:1px solid var(--danger);color:var(--danger);border-radius:10px;padding:12px 16px;white-space:pre-wrap;font-size:14px}
+.notice{border:1px solid var(--danger);color:var(--danger);border-radius:10px;padding:12px 16px;font-size:14px;line-height:1.5}
+.notice.soft{border-color:var(--rule);color:var(--ink-2)}
+.notice p{margin:0 0 6px} .notice p:last-child{margin:0}
+.notice code{font-size:12.5px;background:var(--panel);padding:1px 5px;border-radius:4px;word-break:break-all}
+
 .welcome{color:var(--ink-2);max-width:56ch;font-size:16px;line-height:1.6}
 .welcome p{margin:0 0 12px}
-.welcome kbd{font:12px var(--sans);border:1px solid var(--rule);border-radius:4px;padding:1px 5px;background:var(--panel)}
 
-@media (max-width:860px){
-  .app{grid-template-columns:1fr}
-  aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule)}
-  main{padding-top:26px}
-  .speech,.speech.right{max-width:100%;align-self:stretch}
+.jump{position:fixed;right:20px;bottom:calc(20px + var(--dock-h));z-index:20;border-radius:999px;box-shadow:0 4px 14px rgba(20,26,46,.18)}
+
+/* ---------- dialogs, toast ---------- */
+dialog{border:1px solid var(--rule);border-radius:14px;background:var(--panel);color:var(--ink);padding:0;width:min(460px,calc(100vw - 24px));max-height:calc(100vh - 40px)}
+dialog::backdrop{background:rgba(10,14,28,.45)}
+.dlg{padding:20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;max-height:calc(100vh - 42px)}
+.dlg-head{display:flex;justify-content:space-between;align-items:center}
+.dlg-head h2{margin:0;font-size:17px}
+.dlg-foot{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.help{font-size:13px;color:var(--ink-2);background:var(--paper);border-radius:9px;padding:12px 14px;line-height:1.5}
+.help p{margin:0 0 6px} .help p:last-child{margin:0}
+.help code{font-size:12.5px;word-break:break-all}
+.toast{position:fixed;left:50%;bottom:calc(24px + var(--dock-h));transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:9px 16px;border-radius:999px;font-size:14px;z-index:50;pointer-events:none}
+
+/* ---------- phone ---------- */
+@media (max-width:900px){
+  :root{--dock-h:calc(72px + env(safe-area-inset-bottom));--top-h:calc(55px + env(safe-area-inset-top))}
+  body{padding-top:var(--top-h)}
+  .app{display:block}
+  .topbar{display:flex;position:fixed;top:0;left:0;right:0;z-index:30;align-items:center;justify-content:space-between;gap:8px;
+    background:var(--panel);border-bottom:1px solid var(--rule);padding:8px 10px 8px 16px;padding-top:calc(8px + env(safe-area-inset-top))}
+  .topbar .actions{display:flex;gap:2px}
+  .topbar .dot{margin:0}
+  aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--rule);padding:18px 16px 22px;overflow:visible}
+  aside .side-head,aside .conn,aside .history,aside .theme-row{display:none}
+  form>.go{display:none}
+  body.viewing aside{display:none}
+  main{padding:22px 16px calc(var(--dock-h) + 40px)}
+  .speech,.speech.right{max-width:100%;align-self:stretch;border-right:0;border-left:3px solid var(--c);padding:2px 0 2px 14px}
+  .body{font-size:16.5px}
+  .synthesis{padding:18px}
+  .live{top:var(--top-h);margin-top:16px}
+  .dock{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;gap:10px;align-items:center;
+    background:var(--panel);border-top:1px solid var(--rule);padding:12px 16px calc(12px + env(safe-area-inset-bottom))}
+  .dock .btn{flex:1;min-height:48px;font-size:16px}
+  .dock .btn.small{flex:none}
+  dialog{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:16px 16px 0 0;border-bottom:0;max-height:88vh}
+  .dlg{padding-bottom:calc(20px + env(safe-area-inset-bottom));max-height:88vh}
+  input,select,textarea{font-size:16px!important}
 }
-@media (prefers-reduced-motion:reduce){.body.typing::after{animation:none}}
+@media (prefers-reduced-motion:reduce){.body.typing::after{animation:none}.progress b{transition:none}}
 </style>
 </head>
 <body>
+<header class="topbar">
+  <div class="brand"><img src="favicon.svg" alt=""> Polemix</div>
+  <div class="actions">
+    <button class="iconbtn" id="m-conn" title="Model connection" aria-label="Model connection"><span class="dot" id="m-dot"></span></button>
+    <button class="iconbtn" id="m-history" title="Past debates" aria-label="Past debates">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg>
+    </button>
+    <button class="iconbtn" id="m-theme" title="Switch theme" aria-label="Switch theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+    </button>
+  </div>
+</header>
+
 <div class="app">
   <aside>
-    <div class="brand"><img src="/favicon.svg" alt=""> Polemix <small id="version"></small></div>
-    <div class="status" id="status"><span class="dot"></span><span>Checking model server…</span></div>
+    <div class="side-head">
+      <div class="brand"><img src="favicon.svg" alt=""> Polemix <small id="version"></small></div>
+      <button class="iconbtn" id="theme" title="Switch theme" aria-label="Switch theme">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>
+      </button>
+    </div>
+    <button class="conn" id="conn" type="button"><span class="dot" id="dot"></span><span id="conn-text"><b>Connecting…</b></span></button>
 
-    <form id="setup">
+    <form id="setup" novalidate>
       <label>Motion
-        <textarea id="topic" name="topic" maxlength="500" required placeholder="This house believes that…"></textarea>
+        <textarea id="topic" maxlength="500" placeholder="This house believes that…" enterkeyhint="go"></textarea>
       </label>
-      <label>Line-up
-        <select id="lineup"></select>
-        <span class="hint" id="lineup-desc"></span>
-      </label>
-      <button type="button" class="linkbtn" id="use-suggested">Use the suggested motion</button>
-
-      <details class="custom" id="custom">
-        <summary>Edit debaters</summary>
-        <div id="personas"></div>
-        <button type="button" class="btn small" id="add-persona" style="margin-top:10px">Add debater</button>
-      </details>
-
-      <div class="row">
-        <label>Rounds <input type="number" id="rounds" min="1" max="20" value="3"></label>
-        <label>Creativity <input type="number" id="temperature" min="0" max="2" step="0.1" value="0.7"></label>
+      <div class="field">
+        <span id="ex-label">Try one</span>
+        <div class="examples" id="examples" aria-labelledby="ex-label"></div>
       </div>
-      <label>Model <select id="model"><option value="">Server default</option></select></label>
-      <label class="check"><input type="checkbox" id="judge"> Add a judge's verdict and scores</label>
-      <button class="btn primary" id="go" type="submit">Start debate</button>
+      <div class="field">
+        <span id="lu-label">Who's debating</span>
+        <div class="lineups" id="lineups" role="group" aria-labelledby="lu-label"></div>
+        <span class="hint" id="lineup-desc"></span>
+      </div>
+
+      <details class="more" id="more">
+        <summary>Debaters and settings</summary>
+        <div class="inner">
+          <div id="personas"></div>
+          <button type="button" class="btn small" id="add-persona">Add debater</button>
+          <div class="row">
+            <label>Rounds <input type="number" id="rounds" min="1" max="20" value="3" inputmode="numeric"></label>
+            <label>Creativity <input type="number" id="temperature" min="0" max="2" step="0.1" value="0.7" inputmode="decimal"></label>
+          </div>
+          <label class="check"><input type="checkbox" id="judge"> Add a judge's verdict and scores</label>
+        </div>
+      </details>
+      <button class="btn primary go" id="go" type="submit">Start debate</button>
+      <span class="hint go" id="kbd-hint">Press Ctrl+Enter to start from the motion box.</span>
     </form>
 
-    <section class="history">
+    <section class="history" id="history-sec">
       <h2>Past debates</h2>
       <ul id="history"></ul>
     </section>
-    <button type="button" class="linkbtn" id="theme">Switch theme</button>
   </aside>
 
   <main>
@@ -162,124 +261,571 @@ main{padding:40px clamp(18px,5vw,72px) 120px;max-width:1040px;width:100%}
       <button class="btn small" id="dl-md">Download Markdown</button>
       <button class="btn small" id="dl-json">Download JSON</button>
       <button class="btn small" id="copy">Copy transcript</button>
+      <button class="btn small" id="share" hidden>Share</button>
+    </div>
+    <div class="live" id="live" hidden>
+      <div class="line"><span id="live-text"></span><span id="live-count"></span></div>
+      <div class="progress"><b id="live-bar"></b></div>
     </div>
     <div class="floor" id="floor">
       <div class="welcome">
-        <p>Write a motion, pick who argues it, and press <strong>Start debate</strong>. The debaters take turns over several rounds, then a moderator sums up where they agree and where they don't.</p>
-        <p>Everything runs on your own model server. Debates are saved automatically and listed under Past debates.</p>
+        <p>Write a motion, choose who argues it, and start the debate. The debaters take turns over several rounds, then a moderator sums up where they agree and where they don't.</p>
+        <p>The debaters are played by a model running on your own computer. Nothing is sent anywhere else.</p>
       </div>
     </div>
   </main>
 </div>
 
-<script>
-const $ = s => document.querySelector(s);
-const state = { lineups: [], debate: null, controller: null, markdown: "", file: null };
+<div class="dock" id="dock">
+  <button class="btn primary" id="dock-go" type="button">Start debate</button>
+</div>
+<button class="btn small jump" id="jump" hidden>Jump to latest</button>
+<div class="toast" id="toast" role="status" hidden></div>
 
+<dialog id="history-dlg" aria-label="Past debates">
+  <div class="dlg">
+    <div class="dlg-head"><h2>Past debates</h2><button class="x" data-close aria-label="Close">×</button></div>
+    <div id="history-slot"></div>
+  </div>
+</dialog>
+
+<dialog id="conn-dlg" aria-labelledby="conn-title">
+  <form class="dlg" id="conn-form" method="dialog">
+    <div class="dlg-head"><h2 id="conn-title">Model connection</h2><button class="x" type="button" data-close aria-label="Close">×</button></div>
+    <div id="conn-server" hidden>
+      <p class="hint" style="margin:0">This page is served by the Polemix app on your computer, which connects to <b id="srv-url"></b>. To change the server, restart it with <code>--base-url</code>.</p>
+    </div>
+    <div id="conn-browser">
+      <label>Server address
+        <input type="url" id="base-url" placeholder="http://localhost:1234/v1" autocomplete="off" spellcheck="false">
+        <span class="hint">LM Studio uses <code>http://localhost:1234/v1</code>. Ollama uses <code>http://localhost:11434/v1</code>.</span>
+      </label>
+      <label style="margin-top:14px">API key <span class="hint">Leave empty unless your server needs one.</span>
+        <input type="password" id="api-key" autocomplete="off">
+      </label>
+    </div>
+    <label>Model
+      <select id="model"><option value="">Whichever model is loaded</option></select>
+    </label>
+    <label class="check" id="demo-row"><input type="checkbox" id="demo"> Demo mode: scripted answers, no model needed</label>
+    <div class="help" id="cors-help">
+      <p><b>Connecting from this website</b></p>
+      <p>LM Studio: in the Developer tab, turn on <b>Enable CORS</b>, load a model and start the server.</p>
+      <p>Ollama: quit Ollama, run <code>launchctl setenv OLLAMA_ORIGINS "*"</code> (Mac) or set the <code>OLLAMA_ORIGINS</code> variable to <code>*</code> (Windows), then reopen it.</p>
+      <p>Use Chrome, Edge or Firefox, and allow access to your local network if the browser asks. On a phone, use demo mode.</p>
+    </div>
+    <p class="hint" id="conn-result" role="status" style="margin:0"></p>
+    <div class="dlg-foot">
+      <button type="button" class="btn" id="conn-test">Test connection</button>
+      <button type="submit" class="btn primary" id="conn-save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<script type="application/json" id="builtin-lineups">/*LINEUPS*/</script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const VERSION = "1.1.0";
+const LINEUPS = JSON.parse($("#builtin-lineups").textContent);
+const PALETTE = ["#10b981","#f43f5e","#3b82f6","#f59e0b","#d946ef","#84cc16"];
+const EXAMPLES = [
+  "Social media has done more harm than good",
+  "Every city should make public transport free",
+  "Homework should be abolished in primary schools",
+  "Space exploration is worth the money",
+];
+
+const store = {
+  get(k, d){ try { const v = localStorage.getItem("polemix-" + k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v){ try { localStorage.setItem("polemix-" + k, JSON.stringify(v)); return true; } catch { return false; } },
+};
 function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function md(s){
-  // tiny, safe Markdown: paragraphs, **bold**, *italic*/_italic_, line breaks, "- " lists
   return esc(s).split(/\n{2,}/).map(block => {
     const lines = block.split("\n");
-    const inline = t => t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/(^|\W)[*_](.+?)[*_](?=\W|$)/g,"$1<em>$2</em>").replace(/^#{1,6}\s*/,"");
+    const inline = t => t.replace(/\*\*(.+?)\*\*/g,"<strong>$1</strong>").replace(/(^|\W)[*_](\S.*?)[*_](?=\W|$)/g,"$1<em>$2</em>").replace(/^#{1,6}\s*/,"");
     if (lines.every(l => /^\s*[-*]\s+/.test(l))) return "<ul>" + lines.map(l => "<li>" + inline(l.replace(/^\s*[-*]\s+/,"")) + "</li>").join("") + "</ul>";
     return "<p>" + lines.map(inline).join("<br>") + "</p>";
   }).join("");
 }
-async function api(path, opts){ const r = await fetch(path, opts); const j = await r.json(); if (!r.ok) throw new Error(j.error || r.statusText); return j; }
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.hidden = true, 1800);
+}
+const isPhone = () => matchMedia("(max-width:900px)").matches;
 
-// ---------- theme ----------
-try { const t = localStorage.getItem("polemix-theme"); if (t) document.documentElement.dataset.theme = t; } catch {}
-$("#theme").onclick = () => {
-  const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === "dark"
-    : matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.dataset.theme = dark ? "light" : "dark";
-  try { localStorage.setItem("polemix-theme", document.documentElement.dataset.theme); } catch {}
+/* ================================================================
+   Debate engine (runs in the browser; mirrors polemix/engine.py)
+   ================================================================ */
+const PHASES = {
+  opening: "Give your opening statement. Set out your position and your two or three strongest arguments.",
+  rebuttal: "Give your rebuttal. Respond directly to the most recent points made against you, then strengthen your case.",
+  closing: "Give your closing statement. Summarise why your position should prevail, addressing the best counter-argument you faced.",
+};
+const phaseFor = (r, total) => r === 1 ? "opening" : r === total ? "closing" : "rebuttal";
+
+function systemPrompt(p, topic, others){
+  const stance = {for:"You argue IN FAVOR of the motion.", against:"You argue AGAINST the motion."}[p.stance] || "You take your own independent position on the motion.";
+  const opp = others.length ? others.join(", ") : "the other participants";
+  return `You are ${p.name}, ${p.role}, taking part in a structured debate.\nMotion: "${topic}"\n${stance}\nYour character: ${p.instructions}\n\n` +
+    `Debate rules:\n- Speak only as ${p.name}. Never write lines for ${opp}.\n- Engage directly with the strongest points made against you; quote or name them.\n` +
+    `- Make concrete arguments with reasons and examples, not slogans.\n- Keep each turn under 200 words. Plain prose, no headings, no bullet lists.\n- Do not prefix your answer with your name.`;
+}
+function historyText(d, limit){
+  let t = d.turns.map(x => `${x.speaker} (round ${x.round}, ${x.phase}):\n${x.text.trim()}`).join("\n\n");
+  if (limit && t.length > limit) t = "[…earlier turns omitted…]\n\n" + t.slice(-limit);
+  return t;
+}
+function cleanTurn(text, name){
+  const n = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return text.trim().replace(new RegExp(`^\\**\\s*${n}\\s*\\**\\s*(\\([^)]*\\))?\\s*:\\s*\\**`, "i"), "").trim();
+}
+function parseVerdict(raw, names){
+  const m = raw.match(/\{[\s\S]*\}/); let data = null;
+  try { data = m ? JSON.parse(m[0]) : null; } catch {}
+  if (!data || typeof data !== "object") return { winner:null, scores:{}, reasoning:raw.trim().slice(0,1000), parse_error:true };
+  const scores = {};
+  for (const n of names){ const v = parseFloat((data.scores || {})[n]); if (!isNaN(v)) scores[n] = Math.max(1, Math.min(10, Math.round(v))); }
+  let w = data.winner;
+  if (typeof w === "string"){ const hit = names.find(n => n.toLowerCase() === w.trim().toLowerCase()); w = hit || (w.trim().toLowerCase() === "draw" ? "draw" : w.trim()); }
+  return { winner:w ?? null, scores, reasoning:String(data.reasoning || "").trim() };
+}
+class ThinkFilter {
+  constructor(){ this.buf = ""; this.inside = false; }
+  feed(text){
+    this.buf += text; let out = "";
+    for (;;){
+      const tag = this.inside ? "</think>" : "<think>";
+      const i = this.buf.indexOf(tag);
+      if (i >= 0){
+        if (!this.inside) out += this.buf.slice(0, i);
+        this.buf = this.buf.slice(i + tag.length); this.inside = !this.inside;
+        if (!this.inside) this.buf = this.buf.replace(/^\s+/, "");
+        continue;
+      }
+      let keep = 0;
+      for (let k = Math.min(tag.length - 1, this.buf.length); k > 0; k--) if (tag.startsWith(this.buf.slice(-k))){ keep = k; break; }
+      const emit = keep ? this.buf.slice(0, -keep) : this.buf;
+      this.buf = keep ? this.buf.slice(-keep) : "";
+      if (!this.inside) out += emit;
+      return out;
+    }
+  }
+  flush(){ const r = this.inside ? "" : this.buf; this.buf = ""; return r; }
+}
+
+/* ---- model clients ---- */
+class LLMError extends Error {}
+const DEMO = {
+  for: ["The evidence points to real, measurable gains here, and waiting carries its own cost.",
+        "Every major change looked risky before we learned to manage it; this is no different.",
+        "My opponent lists hazards, but each one has a known remedy we can apply today.",
+        "The people most affected stand to gain the most, and they deserve that chance.",
+        "Progress is not reckless when it is gradual, monitored, and reversible."],
+  against: ["Optimism is not a plan; we need to know what fails, how badly, and how we stop it.",
+        "The rosy picture skips the hard cases, and the hard cases are where people get hurt.",
+        "Who is accountable when this goes wrong and the damage cannot be undone?",
+        "Hidden costs compound quietly until, suddenly, they don't.",
+        "I am not against the idea; I am against doing it before it has earned trust."],
+  neutral: ["Both sides agree the benefits are real; they disagree about how fast trust can be earned.",
+        "The strongest common ground is a staged approach with clear points to change course.",
+        "The open question is accountability: who answers for a decision nobody reviewed?",
+        "A sensible path is small trials, honest measurement, and clear criteria for going further."],
+};
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function demoClient(){
+  return {
+    model: "polemix-demo",
+    async listModels(){ return ["polemix-demo"]; },
+    async *stream(messages, { label = "", signal }){
+      let text;
+      if (label.startsWith("judge")){
+        const m = messages.at(-1).content.match(/Score each participant \((.+?)\)/);
+        const names = m ? m[1].split(",").map(s => s.trim()) : [];
+        yield JSON.stringify({ winner:"draw", scores:Object.fromEntries(names.map(n => [n, 7])), reasoning:"Demo mode: both sides argued coherently; no real model was consulted." });
+        return;
+      }
+      if (label.startsWith("moderator")){
+        text = "**Strongest arguments** — One side stressed concrete benefits and the cost of waiting; the other stressed risks, hidden costs and accountability.\n\n" +
+          "**Common ground** — Everyone accepts a staged approach with clear points to change course.\n\n" +
+          "**Key disagreements** — How fast trust can be earned, and who answers when things go wrong.\n\n" +
+          "**What would settle it** — Results from small, honestly measured trials.\n\n_(Demo mode — connect a model for real debates.)_";
+      } else {
+        const lean = (label.match(/\[stance:(\w+)\]/) || [])[1] || "neutral";
+        const pool = [...(DEMO[lean] || DEMO.neutral)].sort(() => Math.random() - .5);
+        text = pool.slice(0, 3).join(" ");
+      }
+      for (const w of text.match(/\S+\s*/g)){ if (signal?.aborted) return; await sleep(14); yield w; }
+    },
+  };
+}
+function httpClient({ baseUrl, apiKey, model }){
+  const base = baseUrl.replace(/\/+$/, "");
+  const headers = { "Content-Type": "application/json" };
+  if (apiKey) headers.Authorization = "Bearer " + apiKey;
+  const unreachable = () => new LLMError(location.protocol === "https:"
+    ? `Couldn't reach ${base}. Check that the server is running and that CORS is enabled (open Model connection for the steps).`
+    : `Couldn't reach ${base}. Check that the server is running, a model is loaded, and CORS is enabled.`);
+  const c = {
+    model,
+    async listModels(){
+      let r;
+      try { r = await fetch(base + "/models", { headers }); } catch { throw unreachable(); }
+      if (!r.ok) throw new LLMError(`The server answered with HTTP ${r.status}.`);
+      const j = await r.json();
+      return (j.data || []).map(m => m.id).filter(Boolean).sort((a, b) => /embed/i.test(a) - /embed/i.test(b));
+    },
+    async resolveModel(){
+      if (c.model) return c.model;
+      const ms = (await c.listModels()).filter(m => !/embed/i.test(m));
+      if (!ms.length) throw new LLMError("The server is running, but no chat model is loaded. Load one and try again.");
+      return (c.model = ms[0]);
+    },
+    async *stream(messages, { temperature, max_tokens = 600, signal }){
+      const body = JSON.stringify({ model: await c.resolveModel(), messages, temperature, max_tokens, stream: true });
+      let r;
+      try { r = await fetch(base + "/chat/completions", { method:"POST", headers, body, signal }); }
+      catch (e){ if (e.name === "AbortError") throw e; throw unreachable(); }
+      if (!r.ok){
+        let msg = r.statusText; try { const j = await r.json(); msg = j.error?.message || j.error || msg; } catch {}
+        throw new LLMError(`The model server returned HTTP ${r.status}: ${msg}`);
+      }
+      const think = new ThinkFilter();
+      if (!(r.headers.get("content-type") || "").includes("event-stream")){
+        const j = await r.json(); const out = think.feed(j.choices?.[0]?.message?.content || "") + think.flush();
+        if (out) yield out; return;
+      }
+      const reader = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+      for (;;){
+        const { value, done } = await reader.read(); if (done) break;
+        buf += dec.decode(value, { stream:true });
+        let i; while ((i = buf.indexOf("\n")) >= 0){
+          const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+          if (!line.startsWith("data:")) continue;
+          const data = line.slice(5).trim(); if (data === "[DONE]") { const t = think.flush(); if (t) yield t; return; }
+          let obj; try { obj = JSON.parse(data); } catch { continue; }
+          if (obj.error) throw new LLMError(obj.error.message || String(obj.error));
+          const piece = obj.choices?.[0]?.delta?.content || "";
+          const out = think.feed(piece); if (out) yield out;
+        }
+      }
+      const t = think.flush(); if (t) yield t;
+    },
+  };
+  return c;
+}
+
+/* ---- the run loop, emitting the same events as the Python server ---- */
+async function runInBrowser({ topic, lineup, rounds, temperature, judge }, client, emit, signal){
+  const now = new Date();
+  const pad = n => String(n).padStart(2, "0");
+  const d = {
+    topic, lineup, rounds, model:"", turns:[], synthesis:"", verdict:null, status:"running", error:"",
+    id: `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}-${Math.random().toString(16).slice(2,8)}`,
+    created_at: new Date(now - now.getTimezoneOffset() * 6e4).toISOString().slice(0, 19),
+  };
+  const HIST = 12000;
+  const collect = async (msgs, temp, label, onToken) => {
+    let s = "";
+    for await (const p of client.stream(msgs, { temperature:temp, max_tokens:600, label, signal })){ s += p; onToken?.(p); }
+    return s;
+  };
+  try {
+    d.model = client.resolveModel ? await client.resolveModel() : client.model;
+    emit({ type:"start", debate:structuredClone(d) });
+    for (let r = 1; r <= rounds; r++){
+      const phase = phaseFor(r, rounds);
+      for (const p of lineup.debaters){
+        emit({ type:"turn_start", speaker:p.name, round:r, phase, color:p.color });
+        const others = lineup.debaters.filter(o => o.name !== p.name).map(o => o.name);
+        const h = historyText(d, HIST);
+        const msgs = [
+          { role:"system", content:systemPrompt(p, topic, others) },
+          { role:"user", content:(h ? `Debate so far:\n\n${h}\n\n` : "You speak first.\n\n") + PHASES[phase] },
+        ];
+        const raw = await collect(msgs, p.temperature ?? temperature, `${p.name} [stance:${p.stance}]`, t => emit({ type:"token", text:t }));
+        const text = cleanTurn(raw, p.name) || "(no response)";
+        d.turns.push({ speaker:p.name, round:r, phase, text, color:p.color });
+        emit({ type:"turn_end", speaker:p.name, text });
+      }
+    }
+    const m = lineup.moderator, names = lineup.debaters.map(p => p.name);
+    emit({ type:"synthesis_start", speaker:m.name, color:m.color });
+    d.synthesis = (await collect([
+      { role:"system", content:`You are ${m.name}, ${m.role}. ${m.instructions}\nYou never take sides and never invent arguments that were not made.` },
+      { role:"user", content:`Motion: "${topic}"\nParticipants: ${names.join(", ")}\n\nFull transcript:\n\n${historyText(d, HIST * 2)}\n\n` +
+        "Write a balanced synthesis using these Markdown sections:\n**Strongest arguments** (one short paragraph per participant), **Common ground**, **Key disagreements**, **What would settle it**. Keep it under 350 words." },
+    ], m.temperature ?? 0.2, "moderator [stance:neutral]", t => emit({ type:"token", text:t }))).trim();
+    emit({ type:"synthesis_end", text:d.synthesis });
+    if (judge){
+      emit({ type:"judge_start" });
+      const example = JSON.stringify({ winner:names[0], scores:Object.fromEntries(names.map(n => [n, 7])), reasoning:"One or two sentences." });
+      const raw = await collect([
+        { role:"system", content:"You are a strict, impartial debate judge. You score on reasoning quality, use of evidence and how well each side answered its opponents — not on which view you personally hold. You reply with JSON only." },
+        { role:"user", content:`Motion: "${topic}"\n\nTranscript:\n\n${historyText(d, HIST * 2)}\n\nScore each participant (${names.join(", ")}) from 1 to 10 and pick a winner (a participant name, or "draw"). Reply with exactly one JSON object like:\n${example}` },
+      ], 0, "judge");
+      d.verdict = parseVerdict(raw, names);
+      emit({ type:"verdict", verdict:d.verdict });
+    }
+    d.status = "completed";
+  } catch (e){
+    if (e.name === "AbortError" || signal?.aborted) d.status = "stopped";
+    else { d.status = "failed"; d.error = e.message; emit({ type:"error", message:e.message }); }
+  }
+  emit({ type:"end", debate:d });
+  return d;
+}
+
+function toMarkdown(d){
+  const names = d.lineup.debaters.map(p => p.name).join(", ");
+  const out = [`# Debate: ${d.topic}`, "", `- **Line-up:** ${d.lineup.title} (${names})`, `- **Rounds:** ${d.rounds}`,
+    `- **Model:** ${d.model || "unknown"}`, `- **Date:** ${d.created_at.replace("T", " ")}`, `- **Status:** ${d.status}`, ""];
+  let cur = 0;
+  for (const t of d.turns){
+    if (t.round !== cur){ cur = t.round; out.push(`## Round ${cur}`, ""); }
+    out.push(`### ${t.speaker} — ${t.phase}`, "", t.text.trim(), "");
+  }
+  if (d.synthesis) out.push("## Moderator synthesis", "", d.synthesis.trim(), "");
+  if (d.verdict){
+    out.push("## Judge's verdict", "");
+    if (d.verdict.winner) out.push(`**Winner:** ${d.verdict.winner}`, "");
+    for (const [n, s] of Object.entries(d.verdict.scores || {})) out.push(`- ${n}: ${s}/10`);
+    if (d.verdict.reasoning) out.push("", d.verdict.reasoning.trim());
+    out.push("");
+  }
+  if (d.error) out.push("> **Error:** " + d.error, "");
+  return out.join("\n").trimEnd() + "\n";
+}
+
+/* ================================================================
+   Backends: the Polemix Python server, or the browser on its own
+   ================================================================ */
+const serverBackend = info => ({
+  kind: "server", info,
+  async models(){ const r = await fetch("api/models").then(r => r.json()); if (!r.ok) throw new Error(r.error); return r.models; },
+  async run(body, emit, signal){
+    const r = await fetch("api/debate", { method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body), signal });
+    if (!r.ok){ const j = await r.json().catch(() => ({})); throw new Error(j.error || r.statusText); }
+    const reader = r.body.getReader(), dec = new TextDecoder(); let buf = "";
+    for (;;){
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream:true });
+      let i; while ((i = buf.indexOf("\n\n")) >= 0){
+        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+        if (chunk.startsWith("data: ")) emit(JSON.parse(chunk.slice(6)));
+      }
+    }
+  },
+  async list(){ return fetch("api/history").then(r => r.json()); },
+  async get(key){ const r = await fetch("api/history/" + encodeURIComponent(key)); if (!r.ok) throw new Error("Not found"); return r.json(); },
+  async remove(key){ await fetch("api/history/" + encodeURIComponent(key), { method:"DELETE" }); },
+});
+
+const browserBackend = () => {
+  const cfg = () => store.get("conn", { baseUrl:"http://localhost:1234/v1", apiKey:"", model:"", demo:false });
+  const client = () => { const c = cfg(); return c.demo ? demoClient() : httpClient(c); };
+  const all = () => store.get("debates", []);
+  return {
+    kind: "browser", cfg, client,
+    async models(){ return client().listModels(); },
+    async run(body, emit, signal){
+      const lineup = body.custom || LINEUPS.find(l => l.id === body.lineup);
+      const c = client(); if (body.model && c !== null && !cfg().demo) c.model = body.model;
+      return runInBrowser({ topic:body.topic, lineup, rounds:body.rounds, temperature:body.temperature, judge:body.judge }, c, ev => {
+        if (ev.type === "end" && ev.debate.turns.length){
+          const list = all().filter(x => x.id !== ev.debate.id);
+          list.unshift(ev.debate);
+          if (!store.set("debates", list.slice(0, 50))) toast("Couldn't save — browser storage is full or blocked");
+          ev.file = ev.debate.id;
+        }
+        emit(ev);
+      }, signal);
+    },
+    async list(){ return all().map(d => ({ file:d.id, id:d.id, topic:d.topic, created_at:d.created_at, status:d.status })); },
+    async get(key){ const d = all().find(x => x.id === key); if (!d) throw new Error("Not found"); return { ...d, markdown:toMarkdown(d) }; },
+    async remove(key){ store.set("debates", all().filter(x => x.id !== key)); },
+  };
 };
 
-// ---------- setup ----------
-async function init(){
-  const info = await api("/api/info");
-  $("#version").textContent = "v" + info.version;
-  $("#rounds").value = info.rounds;
-  state.lineups = await api("/api/lineups");
-  $("#lineup").innerHTML = state.lineups.map(l => `<option value="${esc(l.id)}">${esc(l.title)}</option>`).join("");
-  onLineup();
-  checkServer(info);
-  await loadHistory();
-  const m = location.hash.match(/^#d=(.+)$/);
-  if (m) api("/api/history/" + m[1]).then(renderSaved).catch(() => {});
+/* ================================================================
+   UI
+   ================================================================ */
+const state = { backend:null, lineupId:LINEUPS[0].id, debate:null, markdown:"", controller:null, models:[], model:"" };
+
+// ---- theme
+function applyTheme(t){ if (t) document.documentElement.dataset.theme = t; }
+applyTheme(store.get("theme", null));
+function toggleTheme(){
+  const cur = document.documentElement.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  const next = cur === "dark" ? "light" : "dark"; applyTheme(next); store.set("theme", next);
 }
-async function checkServer(info){
-  const st = $("#status");
-  if (info.demo){ st.innerHTML = `<span class="dot ok"></span><span>Demo mode — answers are scripted, no model is used.</span>`; return; }
-  const r = await api("/api/models").catch(e => ({ ok:false, error:e.message }));
-  if (r.ok && r.models.length){
-    st.innerHTML = `<span class="dot ok"></span><span>Connected to ${esc(info.base_url)}</span>`;
-    $("#model").innerHTML = `<option value="">Server default (${esc(r.models[0])})</option>` + r.models.map(m => `<option>${esc(m)}</option>`).join("");
-    if (info.model) $("#model").value = info.model;
-  } else {
-    st.innerHTML = `<span class="dot bad"></span><span>${esc(r.error || "No model loaded on the server.")}<br><button class="linkbtn" id="retry">Check again</button></span>`;
-    $("#retry").onclick = () => checkServer(info);
-  }
+$("#theme").onclick = toggleTheme; $("#m-theme").onclick = toggleTheme;
+
+// ---- setup form
+function renderExamples(){
+  const lu = currentLineup();
+  const list = [lu.suggested_topic, ...EXAMPLES].filter(Boolean).slice(0, 4);
+  $("#examples").innerHTML = list.map(t => `<button type="button" class="chip">${esc(t)}</button>`).join("");
+  $("#examples").querySelectorAll(".chip").forEach(b => b.onclick = () => { $("#topic").value = b.textContent; $("#topic").focus(); });
 }
-function currentLineup(){ return state.lineups.find(l => l.id === $("#lineup").value); }
+function currentLineup(){ return LINEUPS.find(l => l.id === state.lineupId) || LINEUPS[0]; }
+function renderLineups(){
+  $("#lineups").innerHTML = LINEUPS.map(l => `<button type="button" class="chip" data-id="${esc(l.id)}" aria-pressed="${l.id === state.lineupId}">${esc(l.title)}</button>`).join("");
+  $("#lineups").querySelectorAll(".chip").forEach(b => b.onclick = () => { state.lineupId = b.dataset.id; store.set("lineup", state.lineupId); onLineup(); });
+}
 function onLineup(){
+  renderLineups();
   const l = currentLineup();
   $("#lineup-desc").textContent = l.description;
-  $("#use-suggested").hidden = !l.suggested_topic;
   renderPersonas(structuredClone(l.debaters));
-  renderCast(l.debaters);
+  renderExamples();
+  if (!state.debate) renderCast(l.debaters);
 }
-$("#lineup").onchange = onLineup;
-$("#use-suggested").onclick = () => { $("#topic").value = currentLineup().suggested_topic; $("#topic").focus(); };
-
-const palette = ["#10b981","#f43f5e","#3b82f6","#f59e0b","#d946ef","#84cc16"];
 function renderPersonas(list){
-  $("#personas").innerHTML = list.map((p,i) => `
-    <div class="persona" style="--c:${esc(p.color)}" data-i="${i}">
+  $("#personas").innerHTML = list.map((p, i) => `
+    <div class="persona" style="--c:${esc(p.color)};margin-top:${i ? 12 : 0}px">
       <div class="top">
         <input type="text" data-k="name" value="${esc(p.name)}" aria-label="Name" maxlength="40">
-        <select data-k="stance" aria-label="Side">
-          ${["for","against","neutral"].map(s => `<option ${p.stance===s?"selected":""} value="${s}">${s==="neutral"?"Own view":s==="for"?"For":"Against"}</option>`).join("")}
-        </select>
-        <button type="button" class="x" title="Remove ${esc(p.name)}" data-remove="${i}">×</button>
+        <select data-k="stance" aria-label="Side">${["for","against","neutral"].map(s => `<option value="${s}" ${p.stance === s ? "selected" : ""}>${{for:"For",against:"Against",neutral:"Own view"}[s]}</option>`).join("")}</select>
+        <button type="button" class="x" data-remove="${i}" aria-label="Remove ${esc(p.name)}">×</button>
       </div>
-      <input type="text" data-k="role" value="${esc(p.role)}" aria-label="Role" placeholder="Who they are">
+      <input type="text" data-k="role" value="${esc(p.role)}" aria-label="Who they are" placeholder="Who they are">
       <textarea data-k="instructions" aria-label="How they argue" placeholder="How they argue">${esc(p.instructions)}</textarea>
       <input type="hidden" data-k="color" value="${esc(p.color)}">
+      <input type="hidden" data-k="temperature" value="${p.temperature ?? ""}">
     </div>`).join("");
   $("#personas").querySelectorAll("[data-remove]").forEach(b => b.onclick = () => {
-    const ps = readPersonas(); if (ps.length <= 2) return alert("A debate needs at least two debaters.");
+    const ps = readPersonas();
+    if (ps.length <= 2) return toast("A debate needs at least two debaters");
     ps.splice(+b.dataset.remove, 1); renderPersonas(ps); renderCast(ps);
   });
-  $("#personas").querySelectorAll("[data-k=name]").forEach(inp => inp.oninput = () => renderCast(readPersonas()));
+  $("#personas").querySelectorAll("[data-k=name]").forEach(inp => inp.oninput = () => { if (!state.debate) renderCast(readPersonas()); });
 }
 function readPersonas(){
   return [...$("#personas").querySelectorAll(".persona")].map(el => {
-    const o = {}; el.querySelectorAll("[data-k]").forEach(f => o[f.dataset.k] = f.value.trim()); return o;
+    const o = {}; el.querySelectorAll("[data-k]").forEach(f => o[f.dataset.k] = f.value.trim());
+    o.temperature = o.temperature === "" ? null : +o.temperature; return o;
   });
 }
 $("#add-persona").onclick = () => {
-  const ps = readPersonas(); if (ps.length >= 6) return alert("Up to six debaters.");
-  ps.push({ name:"Debater " + (ps.length+1), role:"a thoughtful debater", instructions:"", stance:"neutral", color:palette[ps.length % palette.length] });
-  renderPersonas(ps); renderCast(ps); $("#custom").open = true;
+  const ps = readPersonas(); if (ps.length >= 6) return toast("Up to six debaters");
+  ps.push({ name:"Debater " + (ps.length + 1), role:"a thoughtful debater", instructions:"", stance:"neutral", color:PALETTE[ps.length % PALETTE.length], temperature:null });
+  renderPersonas(ps); renderCast(ps);
+  $("#personas").lastElementChild.querySelector("input").select();
 };
-function renderCast(list){
-  $("#cast").innerHTML = list.map(p => `<span style="--c:${esc(p.color)}"><i></i>${esc(p.name)}</span>`).join("");
+function renderCast(list){ $("#cast").innerHTML = list.map(p => `<span style="--c:${esc(p.color)}"><i></i>${esc(p.name)}</span>`).join(""); }
+
+// ---- connection status
+function setConn(kind, title, detail){
+  const cls = { ok:"ok", bad:"bad", demo:"demo", wait:"" }[kind];
+  ["#dot", "#m-dot"].forEach(s => $(s).className = "dot " + cls);
+  $("#conn-text").innerHTML = `<b>${esc(title)}</b>${detail ? esc(detail) : ""}`;
+  $("#m-conn").title = title;
+}
+async function checkConnection(){
+  const b = state.backend;
+  if (b.kind === "browser" && b.cfg().demo){ setConn("demo", "Demo mode", "Scripted answers. Tap to connect a model."); state.models = []; return true; }
+  if (b.kind === "server" && b.info.demo){ setConn("demo", "Demo mode", "Scripted answers (started with --demo)."); state.models = []; return true; }
+  setConn("wait", "Connecting…");
+  try {
+    const ms = await b.models(); state.models = ms;
+    if (!ms.length) throw new Error("No model is loaded on the server.");
+    const where = b.kind === "server" ? b.info.base_url : b.cfg().baseUrl;
+    const chosen = state.model || (b.kind === "browser" ? b.cfg().model : b.info.model) || ms.find(m => !/embed/i.test(m));
+    setConn("ok", chosen || "Connected", where);
+    return true;
+  } catch (e){
+    setConn("bad", "No model connected", b.kind === "browser" ? "Tap to set up, or try demo mode." : e.message);
+    return false;
+  }
 }
 
-// ---------- the floor ----------
-let speech = null, buf = "", speakerOrder = [], lastRound = 0;
-function side(name){ const i = speakerOrder.indexOf(name); return speakerOrder.length === 2 ? (i === 1 ? "right" : "") : ""; }
-function startSpeech(ev){
-  if (ev.round && ev.round !== lastRound){
-    lastRound = ev.round;
-    $("#floor").insertAdjacentHTML("beforeend", `<div class="round-mark">Round ${ev.round}</div>`);
+// ---- connection dialog
+function openConn(){
+  const b = state.backend, dlg = $("#conn-dlg");
+  $("#conn-server").hidden = b.kind !== "server";
+  $("#conn-browser").hidden = b.kind !== "browser";
+  $("#demo-row").hidden = b.kind !== "browser";
+  $("#cors-help").hidden = b.kind !== "browser" || location.protocol !== "https:";
+  $("#conn-test").hidden = b.kind !== "browser";
+  $("#conn-result").textContent = "";
+  if (b.kind === "server"){
+    $("#srv-url").textContent = b.info.base_url;
+  } else {
+    const c = b.cfg(); $("#base-url").value = c.baseUrl; $("#api-key").value = c.apiKey; $("#demo").checked = c.demo;
   }
+  fillModels(b.kind === "server" ? state.model : b.cfg().model);
+  syncDemo();
+  dlg.showModal();
+}
+function fillModels(selected){
+  const ms = state.models.filter(m => m !== "polemix-demo");
+  $("#model").innerHTML = `<option value="">Whichever model is loaded${ms[0] ? ` (${esc(ms[0])})` : ""}</option>` + ms.map(m => `<option ${m === selected ? "selected" : ""}>${esc(m)}</option>`).join("");
+}
+function syncDemo(){
+  const demo = $("#demo").checked && state.backend.kind === "browser";
+  ["#base-url", "#api-key", "#model", "#conn-test"].forEach(s => $(s).disabled = demo);
+}
+$("#demo").onchange = syncDemo;
+$("#conn").onclick = openConn; $("#m-conn").onclick = openConn;
+$("#conn-test").onclick = async () => {
+  const out = $("#conn-result"); out.textContent = "Testing…";
+  try {
+    const ms = await httpClient({ baseUrl:$("#base-url").value.trim() || "http://localhost:1234/v1", apiKey:$("#api-key").value.trim() }).listModels();
+    state.models = ms; fillModels($("#model").value);
+    out.textContent = ms.length ? `Connected. ${ms.length} model${ms.length > 1 ? "s" : ""} available.` : "Connected, but no model is loaded.";
+  } catch (e){ out.textContent = e.message; }
+};
+$("#conn-form").onsubmit = async e => {
+  const b = state.backend;
+  if (b.kind === "browser"){
+    let url = $("#base-url").value.trim() || "http://localhost:1234/v1";
+    if (!/^https?:\/\//.test(url)){ e.preventDefault(); $("#conn-result").textContent = "The address must start with http:// or https://"; return; }
+    store.set("conn", { baseUrl:url.replace(/\/+$/, ""), apiKey:$("#api-key").value.trim(), model:$("#model").value, demo:$("#demo").checked });
+  } else {
+    state.model = $("#model").value;
+  }
+  setTimeout(checkConnection, 0);
+};
+document.querySelectorAll("[data-close]").forEach(b => b.onclick = () => b.closest("dialog").close());
+document.querySelectorAll("dialog").forEach(d => d.addEventListener("click", e => { if (e.target === d) d.close(); }));
+
+// ---- history
+async function loadHistory(){
+  const items = await state.backend.list().catch(() => []);
+  const ul = $("#history");
+  if (!items.length){ ul.innerHTML = `<li class="empty">Debates you run will appear here.</li>`; return; }
+  ul.innerHTML = items.slice(0, 50).map(it => `<li>
+      <button class="open" data-f="${esc(it.file)}">${esc(it.topic)}<span>${esc(fmtDate(it.created_at))}${it.status !== "completed" ? " · " + esc(it.status) : ""}</span></button>
+      <button class="x" data-del="${esc(it.file)}" aria-label="Delete debate">×</button></li>`).join("");
+  ul.querySelectorAll("[data-f]").forEach(b => b.onclick = () => openSaved(b.dataset.f));
+  ul.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!confirm("Delete this debate permanently?")) return;
+    await state.backend.remove(b.dataset.del); toast("Debate deleted"); loadHistory();
+  });
+  markCurrent();
+}
+function markCurrent(){
+  document.querySelectorAll("#history [data-f]").forEach(b => b.toggleAttribute("aria-current", b.dataset.f === state.key));
+}
+function fmtDate(s){ const d = new Date(s); return isNaN(d) ? s : d.toLocaleString([], { dateStyle:"medium", timeStyle:"short" }); }
+async function openSaved(key){
+  if (state.controller) return toast("Stop the current debate first");
+  try { renderSaved(await state.backend.get(key), key); } catch { return toast("That debate no longer exists"); }
+  $("#history-dlg").open && $("#history-dlg").close();
+  scrollTo(0, 0);
+}
+$("#m-history").onclick = () => { $("#history-slot").append($("#history-sec")); $("#history-dlg").showModal(); };
+$("#history-dlg").addEventListener("close", () => $("aside").append($("#history-sec")));
+
+// ---- the debate floor
+let speech = null, buf = "", order = [], lastRound = 0, progress = { done:0, total:1 };
+function side(name){ return order.length === 2 && order.indexOf(name) === 1 ? "right" : ""; }
+function startSpeech(ev){
+  if (ev.round && ev.round !== lastRound){ lastRound = ev.round; $("#floor").insertAdjacentHTML("beforeend", `<div class="round-mark">Round ${ev.round}</div>`); }
   const el = document.createElement("div");
-  el.className = "speech " + side(ev.speaker);
-  el.style.setProperty("--c", ev.color);
+  el.className = "speech " + side(ev.speaker); el.style.setProperty("--c", ev.color);
   el.innerHTML = `<div class="who">${esc(ev.speaker)} <em>${esc(ev.phase)}</em></div><div class="body typing"></div>`;
   $("#floor").append(el); speech = el.querySelector(".body"); buf = "";
 }
@@ -291,127 +837,178 @@ function startSynthesis(ev){
 }
 function renderVerdict(v, debaters){
   const colors = Object.fromEntries(debaters.map(d => [d.name, d.color]));
-  const rows = Object.entries(v.scores || {}).map(([n,s]) =>
-    `<div class="score" style="--c:${esc(colors[n] || "var(--brass)")}"><span>${esc(n)}</span><div class="bar"><b style="width:${s*10}%"></b></div><span>${s}/10</span></div>`).join("");
+  const rows = Object.entries(v.scores || {}).map(([n, s]) =>
+    `<div class="score" style="--c:${esc(colors[n] || "var(--brass)")}"><span>${esc(n)}</span><div class="bar"><b style="width:${s * 10}%"></b></div><span>${s}/10</span></div>`).join("");
   $("#floor").insertAdjacentHTML("beforeend", `<div class="verdict"><h3>Judge's verdict</h3>
-    ${v.winner ? `<div class="win">${v.winner === "draw" ? "A draw" : esc(v.winner) + " wins"}</div>` : ""}
-    ${rows}${v.reasoning ? `<p>${esc(v.reasoning)}</p>` : ""}</div>`);
+    ${v.winner ? `<div class="win">${v.winner === "draw" ? "A draw" : esc(v.winner) + " wins"}</div>` : ""}${rows}${v.reasoning ? `<p>${esc(v.reasoning)}</p>` : ""}</div>`);
 }
-function notice(msg){ $("#floor").insertAdjacentHTML("beforeend", `<div class="notice">${esc(msg)}</div>`); }
+function notice(html, soft){ $("#floor").insertAdjacentHTML("beforeend", `<div class="notice${soft ? " soft" : ""}">${html}</div>`); }
 function setHeader(d){
   $("#headline").textContent = d.topic; $("#headline").classList.remove("placeholder");
-  const date = new Date(d.created_at).toLocaleString();
-  $("#meta").innerHTML = `<span>${esc(d.lineup.title)}</span><span>${d.rounds} round${d.rounds>1?"s":""}</span>${d.model?`<span>${esc(d.model)}</span>`:""}<span>${esc(date)}</span>`;
-  renderCast(d.lineup.debaters);
-  speakerOrder = d.lineup.debaters.map(p => p.name);
+  $("#meta").innerHTML = `<span>${esc(d.lineup.title)}</span><span>${d.rounds} round${d.rounds > 1 ? "s" : ""}</span>${d.model ? `<span>${esc(d.model)}</span>` : ""}<span>${esc(fmtDate(d.created_at))}</span>`;
+  renderCast(d.lineup.debaters); order = d.lineup.debaters.map(p => p.name);
+  document.title = d.topic + " — Polemix";
 }
 function resetFloor(){ $("#floor").innerHTML = ""; lastRound = 0; speech = null; $("#toolbar").hidden = true; }
-
-function renderSaved(d){
+function renderSaved(d, key){
   resetFloor(); setHeader(d);
-  for (const t of d.turns){
-    startSpeech({ speaker:t.speaker, round:t.round, phase:t.phase, color:t.color });
-    speech.textContent = t.text; speech.classList.remove("typing");
-  }
+  for (const t of d.turns){ startSpeech(t); speech.textContent = t.text; speech.classList.remove("typing"); }
   if (d.synthesis){ startSynthesis({ speaker:d.lineup.moderator.name, color:d.lineup.moderator.color }); speech.innerHTML = md(d.synthesis); speech.classList.remove("typing"); }
   if (d.verdict) renderVerdict(d.verdict, d.lineup.debaters);
-  if (d.error) notice(d.error);
-  if (d.status === "stopped") notice("This debate was stopped before it finished.");
-  state.debate = d; state.markdown = d.markdown || ""; $("#toolbar").hidden = false;
-  const f = d.id && document.querySelector(`[data-f^="${CSS.escape(d.id)}"]`);
-  if (f) history.replaceState(null, "", "#d=" + encodeURIComponent(f.dataset.f));
+  if (d.error) notice(`<p>${esc(d.error)}</p>`);
+  if (d.status === "stopped") notice("<p>This debate was stopped before it finished.</p>", true);
+  state.debate = d; state.markdown = d.markdown || toMarkdown(d); state.key = key;
+  $("#toolbar").hidden = false; setViewing(true); markCurrent();
+  history.replaceState(null, "", "#d=" + encodeURIComponent(key));
 }
 
-// ---------- run ----------
+// ---- view state (phone: setup vs. debate) and dock
+function setViewing(on){ document.body.classList.toggle("viewing", on); updateDock(); }
+function updateDock(){
+  const b = $("#dock-go");
+  if (state.controller){ b.textContent = "Stop debate"; b.className = "btn stop"; }
+  else if (document.body.classList.contains("viewing")){ b.textContent = "New debate"; b.className = "btn primary"; }
+  else { b.textContent = "Start debate"; b.className = "btn primary"; }
+  const g = $("#go");
+  g.textContent = state.controller ? "Stop debate" : "Start debate";
+  g.className = "btn go " + (state.controller ? "stop" : "primary");
+}
+$("#dock-go").onclick = () => {
+  if (state.controller) return state.controller.abort();
+  if (document.body.classList.contains("viewing")){ setViewing(false); scrollTo(0, 0); $("#topic").focus(); return; }
+  $("#setup").requestSubmit();
+};
+
+// ---- live progress + follow scrolling
+function setLive(ev){
+  if (ev.type === "turn_start" || ev.type === "synthesis_start" || ev.type === "judge_start"){
+    const who = ev.type === "judge_start" ? "The judge" : ev.speaker;
+    const what = ev.type === "turn_start" ? `is speaking · round ${ev.round} of ${state.debate.rounds}` : ev.type === "judge_start" ? "is scoring" : "is summing up";
+    $("#live").style.setProperty("--c", ev.color || "var(--brass)");
+    $("#live-text").innerHTML = `<b>${esc(who)}</b> ${esc(what)}`;
+  }
+  if (["turn_end", "synthesis_end", "verdict"].includes(ev.type)) progress.done++;
+  $("#live-count").textContent = `${Math.min(progress.done + 1, progress.total)} of ${progress.total}`;
+  $("#live-bar").style.width = (100 * progress.done / progress.total) + "%";
+}
+let follow = true;
+const nearBottom = () => innerHeight + scrollY >= document.documentElement.scrollHeight - 200;
+addEventListener("scroll", () => { follow = nearBottom(); $("#jump").hidden = follow || !state.controller; }, { passive:true });
+$("#jump").onclick = () => { follow = true; $("#jump").hidden = true; scrollTo({ top:document.documentElement.scrollHeight, behavior:"smooth" }); };
+function keepUp(){ if (follow) scrollTo(0, document.documentElement.scrollHeight); }
+
+// ---- running a debate
+$("#topic").addEventListener("keydown", e => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $("#setup").requestSubmit(); } });
 $("#setup").onsubmit = async e => {
   e.preventDefault();
   if (state.controller){ state.controller.abort(); return; }
-  const topic = $("#topic").value.trim(); if (!topic) return $("#topic").focus();
-  const base = currentLineup();
-  const body = {
-    topic, lineup: base.id, rounds: +$("#rounds").value, temperature: +$("#temperature").value,
-    judge: $("#judge").checked, model: $("#model").value || null,
-  };
-  const personas = readPersonas();
-  if (JSON.stringify(personas) !== JSON.stringify(base.debaters.map(({name,role,instructions,stance,color}) => ({name,role,instructions,stance,color})))){
-    body.custom = { id:"custom", title: base.title + " (edited)", description: base.description, debaters: personas, moderator: base.moderator };
+  const topic = $("#topic").value.trim();
+  if (!topic){ toast("Write a motion first"); $("#topic").focus(); return; }
+  const rounds = Math.round(+$("#rounds").value);
+  if (!(rounds >= 1 && rounds <= 20)){ toast("Rounds must be between 1 and 20"); $("#more").open = true; return; }
+  const base = currentLineup(), personas = readPersonas();
+  if (personas.some(p => !p.name)){ toast("Every debater needs a name"); $("#more").open = true; return; }
+  if (new Set(personas.map(p => p.name.toLowerCase())).size !== personas.length){ toast("Debater names must be different"); $("#more").open = true; return; }
+  const body = { topic, lineup:base.id, rounds, temperature:Math.min(2, Math.max(0, +$("#temperature").value || 0.7)), judge:$("#judge").checked,
+    model: state.backend.kind === "server" ? (state.model || null) : null };
+  const pick = ({ name, role, instructions, stance, color, temperature }) => ({ name, role, instructions, stance, color, temperature: temperature ?? null });
+  if (JSON.stringify(personas.map(pick)) !== JSON.stringify(base.debaters.map(pick))){
+    body.custom = { id:"custom", title:base.title + " (edited)", description:base.description, debaters:personas, moderator:base.moderator };
   }
-  resetFloor();
+  if (state.backend.kind === "browser" && !state.backend.cfg().demo && !(await checkConnection())){
+    openConn(); $("#conn-result").textContent = "Connect a model first, or switch on demo mode."; return;
+  }
+
+  resetFloor(); state.debate = null; state.key = null; state.stopShown = false; follow = true;
+  progress = { done:0, total:personas.length * rounds + 1 + (body.judge ? 1 : 0) };
   state.controller = new AbortController();
-  $("#go").textContent = "Stop debate"; $("#go").className = "btn stop";
+  $("#live").hidden = false; setViewing(true); updateDock(); scrollTo(0, 0);
   try {
-    const r = await fetch("/api/debate", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body), signal: state.controller.signal });
-    if (!r.ok){ const j = await r.json().catch(() => ({})); throw new Error(j.error || r.statusText); }
-    const reader = r.body.getReader(); const dec = new TextDecoder(); let pending = "";
-    for (;;){
-      const { value, done } = await reader.read(); if (done) break;
-      pending += dec.decode(value, { stream:true });
-      let i; while ((i = pending.indexOf("\n\n")) >= 0){
-        const chunk = pending.slice(0, i); pending = pending.slice(i + 2);
-        if (chunk.startsWith("data: ")) handle(JSON.parse(chunk.slice(6)));
-      }
-    }
+    await state.backend.run(body, handle, state.controller.signal);
   } catch (err){
-    if (err.name === "AbortError"){ if (speech) speech.classList.remove("typing"); notice("Debate stopped. What was said so far has been saved."); }
-    else notice(err.message);
+    if (err.name === "AbortError"){
+      if (speech) speech.classList.remove("typing");
+      if (!state.stopShown){ state.stopShown = true; notice("<p>Debate stopped. What was said so far has been saved.</p>", true); }
+    }
+    else notice(`<p>${esc(err.message)}</p>`);
   } finally {
-    state.controller = null; $("#go").textContent = "Start debate"; $("#go").className = "btn primary";
-    loadHistory();
+    state.controller = null; $("#live").hidden = true; $("#jump").hidden = true; updateDock(); loadHistory();
   }
 };
 function handle(ev){
   switch (ev.type){
-    case "start": setHeader(ev.debate); break;
+    case "start": state.debate = ev.debate; setHeader(ev.debate); break;
     case "turn_start": startSpeech(ev); break;
     case "synthesis_start": startSynthesis(ev); break;
     case "token":
+      if (!speech) break;
       buf += ev.text;
       if (speech.closest(".synthesis")) speech.innerHTML = md(buf); else speech.textContent = buf;
-      if (innerHeight + scrollY >= document.body.scrollHeight - 160) scrollTo(0, document.body.scrollHeight);
-      break;
+      keepUp(); break;
     case "turn_end": speech.textContent = ev.text; speech.classList.remove("typing"); break;
     case "synthesis_end": speech.innerHTML = md(ev.text); speech.classList.remove("typing"); break;
-    case "judge_start": $("#floor").insertAdjacentHTML("beforeend", `<div class="round-mark" id="judging">The judge is scoring</div>`); break;
-    case "verdict": $("#judging")?.remove(); renderVerdict(ev.verdict, state.debate.lineup.debaters); break;
-    case "error": if (speech) speech.classList.remove("typing"); notice(ev.message); break;
+    case "verdict": renderVerdict(ev.verdict, state.debate.lineup.debaters); keepUp(); break;
+    case "error":
+      if (speech) speech.classList.remove("typing");
+      notice(`<p>${esc(ev.message)}</p>${state.backend.kind === "browser" ? `<p><button class="linkbtn" onclick="openConn()">Check the model connection</button></p>` : ""}`);
+      break;
     case "end":
-      state.debate = ev.debate; state.file = ev.file || null;
-      $("#toolbar").hidden = false;
-      if (ev.file) api("/api/history/" + encodeURIComponent(ev.file)).then(d => state.markdown = d.markdown);
+      state.debate = ev.debate; state.key = ev.file || null;
+      $("#toolbar").hidden = !ev.debate.turns.length;
+      state.markdown = toMarkdown(ev.debate);
+      if (ev.file) history.replaceState(null, "", "#d=" + encodeURIComponent(ev.file));
+      if (ev.debate.status === "completed") toast("Debate saved");
+      if (ev.debate.status === "stopped" && !state.stopShown){
+        state.stopShown = true; if (speech) speech.classList.remove("typing");
+        notice("<p>Debate stopped. What was said so far has been saved.</p>", true);
+      }
       break;
   }
-  if (ev.type === "start") state.debate = ev.debate;
+  if (state.debate) setLive(ev);
 }
 
-// ---------- history & export ----------
-async function loadHistory(){
-  const items = await api("/api/history").catch(() => []);
-  const ul = $("#history");
-  if (!items.length){ ul.innerHTML = `<li class="empty">Debates you run will appear here.</li>`; return; }
-  ul.innerHTML = items.slice(0, 50).map(it => `<li>
-      <button class="open" data-f="${esc(it.file)}">${esc(it.topic)}<span>${esc(new Date(it.created_at).toLocaleString())}${it.status !== "completed" ? " · " + esc(it.status) : ""}</span></button>
-      <button class="x" title="Delete" data-del="${esc(it.file)}">×</button></li>`).join("");
-  ul.querySelectorAll("[data-f]").forEach(b => b.onclick = async () => {
-    if (state.controller) return;
-    renderSaved(await api("/api/history/" + encodeURIComponent(b.dataset.f)));
-    ul.querySelectorAll("[aria-current]").forEach(x => x.removeAttribute("aria-current")); b.setAttribute("aria-current","true");
-    scrollTo(0,0);
-  });
-  ul.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
-    if (!confirm("Delete this debate permanently?")) return;
-    await api("/api/history/" + encodeURIComponent(b.dataset.del), { method:"DELETE" }); loadHistory();
-  });
-}
+// ---- export
 function download(name, text, type){
-  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
 }
-function baseName(){ return (state.debate?.topic || "debate").toLowerCase().replace(/[^a-z0-9]+/g,"-").slice(0,50).replace(/^-|-$/g,""); }
+const baseName = () => (state.debate?.topic || "debate").toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 50).replace(/^-|-$/g, "") || "debate";
 $("#dl-md").onclick = () => download(baseName() + ".md", state.markdown, "text/markdown");
-$("#dl-json").onclick = () => download(baseName() + ".json", JSON.stringify(state.debate, null, 2), "application/json");
-$("#copy").onclick = async () => { try { await navigator.clipboard.writeText(state.markdown); $("#copy").textContent = "Copied"; setTimeout(() => $("#copy").textContent = "Copy transcript", 1500); } catch { alert("Copy isn't available here — use Download instead."); } };
+$("#dl-json").onclick = () => { const { markdown, ...d } = state.debate; download(baseName() + ".json", JSON.stringify(d, null, 2), "application/json"); };
+$("#copy").onclick = async () => { try { await navigator.clipboard.writeText(state.markdown); toast("Transcript copied"); } catch { toast("Copy isn't available here — use Download"); } };
+if (navigator.share) $("#share").hidden = false;
+$("#share").onclick = async () => {
+  try {
+    const file = new File([state.markdown], baseName() + ".md", { type:"text/markdown" });
+    if (navigator.canShare?.({ files:[file] })) await navigator.share({ title:state.debate.topic, files:[file] });
+    else await navigator.share({ title:state.debate.topic, text:state.markdown });
+  } catch {}
+};
 
-init().catch(e => notice("Could not load Polemix: " + e.message));
+// ---- start-up
+async function init(){
+  if (/Mac|iPhone|iPad/.test(navigator.platform)) $("#kbd-hint").textContent = "Press ⌘+Enter to start from the motion box.";
+  state.lineupId = store.get("lineup", LINEUPS[0].id);
+  if (!LINEUPS.some(l => l.id === state.lineupId)) state.lineupId = LINEUPS[0].id;
+  let info = null;
+  if (!/\.github\.io$/.test(location.hostname)) try { const r = await fetch("api/info"); if (r.ok && (r.headers.get("content-type") || "").includes("json")) info = await r.json(); } catch {}
+  state.backend = info ? serverBackend(info) : browserBackend();
+  $("#version").textContent = "v" + (info?.version || VERSION);
+  if (info){ $("#rounds").value = info.rounds; state.model = info.model || ""; }
+  onLineup();
+  await loadHistory();
+  updateDock();
+  const ok = await checkConnection();
+  const m = location.hash.match(/^#d=(.+)$/);
+  if (m) openSaved(decodeURIComponent(m[1]));
+  else if (!ok && state.backend.kind === "browser" && !store.get("seen", false)){
+    store.set("seen", true);
+    notice(`<p><b>No model found on this computer yet.</b> Polemix needs LM Studio or Ollama running locally.</p>
+      <p><button class="linkbtn" onclick="openConn()">Set up a connection</button> &nbsp;or&nbsp; <button class="linkbtn" id="try-demo">try demo mode</button></p>`, true);
+    $("#try-demo").onclick = () => { store.set("conn", { ...state.backend.cfg(), demo:true }); checkConnection(); toast("Demo mode is on"); };
+  }
+}
+init().catch(e => notice("<p>Polemix couldn't start: " + esc(e.message) + "</p>"));
 </script>
 </body>
 </html>
