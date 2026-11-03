@@ -119,6 +119,9 @@ def test_no_models_loaded(fake_llm):
 
 # ---------------------------------------------------------- config/personas --
 def test_settings_from_env(tmp_path, monkeypatch):
+    import os
+    # load_dotenv writes to os.environ; give this test its own copy so nothing leaks into other tests
+    monkeypatch.setattr(os, "environ", os.environ.copy())
     for k in ["POLEMIX_BASE_URL", "OPENAI_API_BASE", "OPENAI_BASE_URL", "POLEMIX_ROUNDS", "POLEMIX_MODEL"]:
         monkeypatch.delenv(k, raising=False)
     env = tmp_path / ".env"
@@ -251,7 +254,8 @@ def test_build_site(tmp_path):
     start = html.index('id="builtin-lineups">') + len('id="builtin-lineups">')
     embedded = json.loads(html[start:html.index("</script>", start)])
     assert embedded == [p.to_dict() for p in PRESETS.values()]
-    assert render_index().decode() == html
+    # compare bytes: read_text() would turn Windows CRLF line endings into LF
+    assert render_index() == (tmp_path / "site" / "index.html").read_bytes()
     assert main(["build-site", str(tmp_path / "other")]) == 0
 
 

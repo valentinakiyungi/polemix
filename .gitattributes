@@ -1,0 +1,3 @@
+# Keep line endings identical on every OS (GitHub's Windows runners would otherwise convert to CRLF)
+* text=auto eol=lf
+*.png binary
